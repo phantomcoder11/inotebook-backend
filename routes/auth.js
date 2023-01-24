@@ -17,17 +17,20 @@ router.post(
   ],
   async (req, res) => {
     // if there are errors return bad requests and the errors
+    let success=true;
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      success=false;
+      return res.status(400).json({success, errors: errors.array() });
     }
     //Logic to check the entered email is unique or not
     try {
       let user = await User.findOne({ email: req.body.email });
       if (user) {
+        success=false;
         return res
           .status(400)
-          .json({ error: "Sorry another user exists with the same email" });
+          .json({ success,error: "Sorry another user exists with the same email" });
       }
       const salt = await bcrypt.genSaltSync(10);
       const secPass = await bcrypt.hashSync(req.body.password, salt);
@@ -44,12 +47,13 @@ router.post(
       };
 
       const authToken = jwt.sign(data, JWT_SECRET);
-
-      res.json(authToken);
+      success=true;
+      res.json({success,authToken});
     } catch (error) {
+      success=false;
       //If any unknown error occurs in the try block, catch block will catch it and show it here
       console.log(error.message);
-      res.status(500).send("Some error occured");
+      res.status(500).json({success,error:"Some error occured"});
     }
   }
 );
@@ -62,6 +66,7 @@ router.post(
     body("password", "Password can't be blank").exists(),
   ],
   async (req, res) => {
+    let success=true;
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
@@ -70,15 +75,17 @@ router.post(
     try {
       let user =  await User.findOne({ email });
       if (!user) {
+        success=false;
         return res
           .status(400)
-          .json({ errors: "Please try to login with correct credentials" });
+          .json({ success,errors: "Please try to login with correct credentials" });
       }
       const passwordComapre = await bcrypt.compare(password, user.password);
       if (!passwordComapre) {
+        success=false;
         return res
           .status(400)
-          .json({ errors: "Please try to login with correct credentials" });
+          .json({success, errors: "Please try to login with correct credentials" });
       }
       const data = {
         user: {
@@ -87,12 +94,13 @@ router.post(
       };
 
       const authToken = jwt.sign(data, JWT_SECRET);
-
-      res.json(authToken);
+      success=true;
+      res.json({success,authToken});
     } catch (error) {
+      success=false;
       //If any unknown error occurs in the try block, catch block will catch it and show it here
       console.log(error.message);
-      res.status(500).send("Internal Server Error");
+      res.status(500).json({success,error:"Internal Server Error"});
     }
   }
 );

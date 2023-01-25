@@ -1,8 +1,10 @@
 
 const express = require('express')
 const cors = require('cors')
-const connectToMongo = require('./db')
-connectToMongo();
+require('dotenv').config();
+
+require('./db')
+//connectToMongo();
 const app = express()
 const port = 5000
 
